@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoColeta Solidária — Coleta seletiva em Campo Grande</title>
+  <meta name="description" content="Plataforma web para agendamento de coleta seletiva domiciliar e valorização do trabalho de catadores em Campo Grande - MS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="#" @click.prevent="irPara('home')">
+          <span class="brand-mark" aria-hidden="true"></span>
+          EcoColeta <em>Solidária</em>
+        </a>
+
+        <button class="nav-toggle" type="button" @click="menuAberto = !menuAberto" :aria-expanded="menuAberto.toString()" aria-controls="nav-principal">
+          <span class="sr-only">Abrir menu</span>
+          <span class="nav-toggle-bar"></span>
+        </button>
+
+        <nav id="nav-principal" class="main-nav" :class="{ 'is-open': menuAberto }" aria-label="Navegação principal">
+          <a href="#" @click.prevent="irPara('home')" :class="{ ativo: view === 'home' }">Início</a>
+          <a href="#" @click.prevent="irPara('agendamento')" :class="{ ativo: view === 'agendamento' }">Agendar coleta</a>
+          <a href="#" @click.prevent="irPara('painel')" :class="{ ativo: view === 'painel' }">Painel</a>
+          <a href="#" class="nav-cta" @click.prevent="irPara('conta')" :class="{ ativo: view === 'conta' }">
+            {{ usuarioAtual ? usuarioAtual.nome.split(' ')[0] : 'Entrar' }}
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+
+      <!-- HOME / HERO -->
+      <section v-if="view === 'home'" class="hero">
+        <div class="wrap hero-grid">
+          <div class="hero-text">
+            <h1>Quem separa o lixo em casa encontra quem transforma isso em renda.</h1>
+            <p class="hero-lede">A EcoColeta Solidária conecta moradores a cooperativas de catadores, organiza o agendamento da coleta seletiva porta a porta e mostra, em números, o que a cidade já reaproveitou.</p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" @click="irPara('agendamento')">Agendar minha coleta</button>
+              <button class="btn btn-ghost" @click="irPara('conta')">Sou catador(a)</button>
+            </div>
+          </div>
+
+          <div class="hero-figure" aria-hidden="true">
+            <svg class="hero-blob" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <path fill="var(--verde-musgo)" opacity="0.16" d="M300,60 C360,100 380,180 350,250 C320,320 240,360 170,340 C100,320 40,260 40,190 C40,120 100,50 180,40 C220,35 260,30 300,60 Z"></path>
+              <circle cx="330" cy="90" r="5" fill="var(--terra)" opacity="0.5"></circle>
+              <circle cx="60" cy="300" r="4" fill="var(--verde-mata)" opacity="0.35"></circle>
+            </svg>
+            <div class="route-card">
+              <div class="route-row" v-for="(m, i) in materiaisExemplo" :key="i">
+                <svg class="route-icon" viewBox="0 0 24 24" fill="none" :stroke="m.cor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="m.icone"></svg>
+                <span class="route-label">{{ m.nome }}</span>
+                <span class="route-value">{{ m.kg }} kg</span>
+              </div>
+              <div class="route-total">
+                <span>Total coletado na região</span>
+                <strong>{{ totalReciclado }} kg</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wrap process-section">
+          <h2 class="process-heading">Como a coleta acontece</h2>
+          <ol class="process-list">
+            <li class="process-item">
+              <span class="process-num" aria-hidden="true">1</span>
+              <span class="icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"></circle><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"></path></svg>
+              </span>
+              <div>
+                <h3>Cadastro por perfil</h3>
+                <p>Morador ou catador — cada um vê, desde o primeiro acesso, só os campos que sua jornada realmente precisa.</p>
+              </div>
+            </li>
+            <li class="process-item">
+              <span class="process-num" aria-hidden="true">2</span>
+              <span class="icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="15" rx="2.2"></rect><path d="M4 10h16M8 3.5v3M16 3.5v3"></path><circle cx="9.3" cy="14.3" r="1"></circle><circle cx="14.7" cy="14.3" r="1"></circle></svg>
+              </span>
+              <div>
+                <h3>Agendamento em um passo</h3>
+                <p>Data, horário, endereço e tipo de material em um único formulário curto, pensado para não perder ninguém no meio do caminho.</p>
+              </div>
+            </li>
+            <li class="process-item">
+              <span class="process-num" aria-hidden="true">3</span>
+              <span class="icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16V8.8L7 6h6l2 3h3.4a1.6 1.6 0 0 1 1.6 1.6V16"></path><path d="M3 16h1.6M16 16h5.4"></path><circle cx="7.2" cy="16.4" r="1.9"></circle><circle cx="17" cy="16.4" r="1.9"></circle></svg>
+              </span>
+              <div>
+                <h3>Coleta e retorno</h3>
+                <p>A cooperativa recolhe o material e o volume entra no painel público, dando transparência ao trabalho de quem recicla.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="impact-band" v-if="view === 'home'">
+        <div class="wrap">
+          <p class="impact-sentence">
+            Até agora, moradores e cooperativas já encaminharam
+            <strong>{{ totalReciclado }} kg</strong>
+            de material reciclável em Campo Grande — cada agendamento novo soma a esse número.
+          </p>
+          <button class="btn btn-on-dark" @click="irPara('agendamento')">Agendar minha coleta</button>
+        </div>
+      </section>
+
+      <!-- CONTA: CADASTRO / LOGIN (RF01) -->
+      <section v-if="view === 'conta'" class="page-narrow">
+        <div class="wrap">
+          <h1>{{ usuarioAtual ? 'Minha conta' : 'Entrar ou criar conta' }}</h1>
+
+          <div v-if="usuarioAtual" class="conta-logada">
+            <p>Você está conectado(a) como <strong>{{ usuarioAtual.nome }}</strong> — perfil {{ usuarioAtual.perfil }}.</p>
+            <button class="btn btn-ghost" @click="sair">Sair da conta</button>
+          </div>
+
+          <template v-else>
+            <div class="perfil-toggle" role="radiogroup" aria-label="Tipo de perfil">
+              <button type="button" :class="{ ativo: perfilForm === 'morador' }" @click="perfilForm = 'morador'" role="radio" :aria-checked="perfilForm === 'morador'">Sou morador(a)</button>
+              <button type="button" :class="{ ativo: perfilForm === 'catador' }" @click="perfilForm = 'catador'" role="radio" :aria-checked="perfilForm === 'catador'">Sou catador(a)</button>
+            </div>
+
+            <form class="form-card" @submit.prevent="cadastrarOuEntrar">
+              <div class="campo">
+                <label for="nome">Nome completo</label>
+                <input id="nome" type="text" v-model.trim="formConta.nome" required autocomplete="name">
+              </div>
+
+              <div class="campo">
+                <label for="email">E-mail</label>
+                <input id="email" type="email" v-model.trim="formConta.email" required autocomplete="email">
+              </div>
+
+              <div class="campo" v-if="perfilForm === 'catador'">
+                <label for="cooperativa">Cooperativa ou associação</label>
+                <input id="cooperativa" type="text" v-model.trim="formConta.cooperativa" placeholder="Ex: Cooperativa Recicla CG">
+              </div>
+
+              <div class="campo" v-if="perfilForm === 'morador'">
+                <label for="bairro">Bairro</label>
+                <input id="bairro" type="text" v-model.trim="formConta.bairro" placeholder="Ex: Amambaí">
+              </div>
+
+              <p class="form-feedback" v-if="mensagemConta" role="status">{{ mensagemConta }}</p>
+
+              <button type="submit" class="btn btn-primary btn-block" :disabled="enviandoConta">
+                {{ enviandoConta ? 'Entrando...' : ('Entrar como ' + (perfilForm === 'morador' ? 'morador(a)' : 'catador(a)')) }}
+              </button>
+            </form>
+          </template>
+        </div>
+      </section>
+
+      <!-- AGENDAMENTO (RF02) -->
+      <section v-if="view === 'agendamento'" class="page-narrow">
+        <div class="wrap">
+          <h1>Agendar recolhimento</h1>
+          <p class="lede">Informe quando e onde a coleta deve acontecer. Você pode acompanhar tudo depois no painel.</p>
+
+          <p v-if="!usuarioAtual" class="alerta">
+            É preciso <a href="#" @click.prevent="irPara('conta')">entrar ou criar uma conta</a> para agendar uma coleta.
+          </p>
+
+          <form v-else class="form-card" @submit.prevent="agendarColeta">
+            <div class="campo-linha">
+              <div class="campo">
+                <label for="data">Data</label>
+                <input id="data" type="date" v-model="formAgenda.data" required :min="hoje">
+              </div>
+              <div class="campo">
+                <label for="horario">Horário</label>
+                <input id="horario" type="time" v-model="formAgenda.horario" required>
+              </div>
+            </div>
+
+            <div class="campo">
+              <label for="endereco">Endereço para coleta</label>
+              <input id="endereco" type="text" v-model.trim="formAgenda.endereco" placeholder="Rua, número, bairro" required>
+            </div>
+
+            <div class="campo">
+              <span class="campo-legenda" id="material-label">Tipo de material</span>
+              <div class="material-grid" role="radiogroup" aria-labelledby="material-label">
+                <button type="button" class="material-chip" v-for="opc in tiposMaterial" :key="opc.nome"
+                        :class="{ selecionado: formAgenda.material === opc.nome }"
+                        role="radio" :aria-checked="formAgenda.material === opc.nome"
+                        @click="formAgenda.material = opc.nome">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="opc.icone"></svg>
+                  {{ opc.nome }}
+                </button>
+              </div>
+              <input type="hidden" required v-model="formAgenda.material">
+            </div>
+
+            <div class="campo">
+              <label for="quantidade">Quantidade estimada (kg)</label>
+              <input id="quantidade" type="number" min="1" step="1" v-model.number="formAgenda.quantidade" required>
+            </div>
+
+            <p class="form-feedback" v-if="mensagemAgenda" role="status">{{ mensagemAgenda }}</p>
+
+            <button type="submit" class="btn btn-primary btn-block" :disabled="enviandoAgenda">
+              {{ enviandoAgenda ? 'Agendando...' : 'Confirmar agendamento' }}
+            </button>
+          </form>
+
+          <div v-if="usuarioAtual && agendamentosDoUsuario.length" class="lista-agendamentos">
+            <h2>Meus agendamentos</h2>
+            <ul>
+              <li v-for="ag in agendamentosDoUsuario" :key="ag.id">
+                <span class="ag-data">{{ formatarData(ag.data) }} às {{ ag.horario }}</span>
+                <span class="ag-material">{{ ag.material }} · {{ ag.quantidade }} kg</span>
+                <span class="ag-endereco">{{ ag.endereco }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAINEL / DASHBOARD (RF03) -->
+      <section v-if="view === 'painel'" class="page-wide">
+        <div class="wrap">
+          <h1>Painel de impacto</h1>
+          <p class="lede">Volume reciclado e histórico de coletas registrados na plataforma.</p>
+
+          <div class="cards-resumo">
+            <div class="card-resumo">
+              <svg class="card-resumo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 3 5 6 5 9a5 5 0 0 1-10 0c0-3 2-6 5-9Z"></path><path d="M9.5 15a2.5 2.5 0 0 0 2.5 2.5"></path></svg>
+              <span class="card-resumo-label">Volume total reciclado</span>
+              <strong class="card-resumo-valor">{{ totalReciclado }} kg</strong>
+            </div>
+            <div class="card-resumo">
+              <svg class="card-resumo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="2.2"></rect><path d="M4 10h16M8 3.5v3M16 3.5v3"></path><path d="m9 14.5 2 2 4-4.2"></path></svg>
+              <span class="card-resumo-label">Coletas registradas</span>
+              <strong class="card-resumo-valor">{{ agendamentos.length }}</strong>
+            </div>
+            <div class="card-resumo">
+              <svg class="card-resumo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9.5L12 4l8 5.5V19"></path><path d="M9 19v-6h6v6"></path></svg>
+              <span class="card-resumo-label">Material mais coletado</span>
+              <strong class="card-resumo-valor">{{ materialPrincipal }}</strong>
+            </div>
+          </div>
+
+          <h2 class="secao-titulo">Volume por material</h2>
+          <div class="grafico-barras" v-if="agendamentos.length">
+            <div class="barra-linha" v-for="item in volumePorMaterial" :key="item.material">
+              <span class="barra-nome">{{ item.material }}</span>
+              <div class="barra-trilho">
+                <div class="barra-preenchida" :style="{ width: item.percentual + '%' }"></div>
+              </div>
+              <span class="barra-valor">{{ item.kg }} kg</span>
+            </div>
+          </div>
+
+          <h2 class="secao-titulo">Histórico de coletas</h2>
+          <table class="tabela-historico" v-if="agendamentos.length">
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Morador</th>
+                <th scope="col">Material</th>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Endereço</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ag in agendamentosOrdenados" :key="ag.id">
+                <td>{{ formatarData(ag.data) }}</td>
+                <td>{{ ag.nomeUsuario }}</td>
+                <td>{{ ag.material }}</td>
+                <td>{{ ag.quantidade }} kg</td>
+                <td>{{ ag.endereco }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p v-else class="alerta">Ainda não há coletas registradas. <a href="#" @click.prevent="irPara('agendamento')">Agende a primeira.</a></p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p>EcoColeta Solidária — Projeto de Extensão UFMS Digital, Campo Grande - MS.</p>
+        <p class="footer-meta">Protótipo educacional do Projeto Integrador II · dados armazenados apenas neste navegador.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
