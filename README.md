@@ -126,15 +126,7 @@ mensagens explicativas, merge). Rode `git log --oneline --graph --all` depois
 de clonar para ver o histórico completo.
 
 
-```bash
-git checkout main
-git filter-branch -f --env-filter '
-export GIT_AUTHOR_NAME="Seu Nome"
-export GIT_AUTHOR_EMAIL="seu-email-do-github@exemplo.com"
-export GIT_COMMITTER_NAME="Seu Nome"
-export GIT_COMMITTER_EMAIL="seu-email-do-github@exemplo.com"
-' -- --all
-```
+
 
 
 
