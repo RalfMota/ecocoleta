@@ -1,0 +1,77 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/ecocoleta-solidaria
+
+jobs:
+  build-e-publica-imagem:
+    name: Build da imagem (artefato único promovido entre ambientes)
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: tag
+        run: echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:staging-latest
+
+  deploy-homologacao:
+    name: Deploy em Homologação (Staging)
+    needs: build-e-publica-imagem
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    steps:
+      - name: Deploy da imagem ${{ needs.build-e-publica-imagem.outputs.tag }} em staging
+        run: echo "TODO ao configurar hospedagem real (ex. redeploy via SSH, Render, Fly.io)."
+      - name: Health check pós-implantação
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.STAGING_URL }}" || echo "000")
+          echo "Status HTTP de ${{ vars.STAGING_URL }}: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Health check falhou (status $STATUS) — staging não ficou saudável."
+            exit 1
+          fi
+
+  deploy-producao:
+    name: Deploy em Produção (requer aprovação manual)
+    needs: [build-e-publica-imagem, deploy-homologacao]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Deploy da imagem ${{ needs.build-e-publica-imagem.outputs.tag }} em produção
+        run: echo "TODO ao configurar hospedagem real — promove exatamente a mesma imagem testada em staging."
+      - name: Health check pós-implantação
+        id: health
+        continue-on-error: true
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.PRODUCTION_URL }}" || echo "000")
+          echo "Status HTTP de ${{ vars.PRODUCTION_URL }}: $STATUS"
+          test "$STATUS" = "200"
+      - name: Rollback automático para a última tag estável
+        if: steps.health.outcome == 'failure'
+        run: |
+          echo "::error::Health check falhou em produção — revertendo para a última imagem estável."
+          echo "TODO: redeploy de ${{ env.IMAGE }}:production-stable no destino de hospedagem."
+          exit 1
