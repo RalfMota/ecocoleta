@@ -63,7 +63,9 @@ CREATE TABLE agendamentos (
     status         status_agendamento NOT NULL DEFAULT 'agendado',
     criado_em      TIMESTAMP NOT NULL DEFAULT now(),
 
-    CONSTRAINT chk_data_nao_passada CHECK (data_coleta >= CURRENT_DATE)
+    -- Só impede data retroativa em coletas ainda pendentes; um registro já
+    -- coletado (status <> 'agendado') pode legitimamente ter data passada.
+    CONSTRAINT chk_data_nao_passada CHECK (status <> 'agendado' OR data_coleta >= CURRENT_DATE)
 );
 
 -- Índices de apoio às consultas mais comuns do painel (RF03).

@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  lint-e-testes-unitarios:
+    name: Lint + testes unitários (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format
+      - run: npm test
+
+  teste-integracao-banco:
+    name: Teste de integração / banco de dados (Postgres real)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecocoleta_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Aplica schema.sql no banco de teste
+        run: psql "$DATABASE_URL" -f database/schema.sql
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/ecocoleta_test
+      - run: npm run test:db
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/ecocoleta_test
+
+  varredura-de-segredos:
+    name: Gitleaks — varredura de segredos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  analise-estatica-codeql:
+    name: CodeQL — análise estática de segurança
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: github/codeql-action/analyze@v3
+
+  # SonarCloud exige o token SONAR_TOKEN configurado em Settings > Secrets > Actions
+  # e o projeto criado em sonarcloud.io (gratuito para repositórios públicos).
+  # Descomente este job depois de concluir esse cadastro.
+  # analise-sonarcloud:
+  #   name: SonarCloud — qualidade e vulnerabilidades
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - uses: SonarSource/sonarcloud-github-action@master
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,0 +1,22 @@
+{
+  "name": "ecocoleta-solidaria",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EcoColeta Solidária — plataforma de coleta seletiva (UFMS Digital, 95DX7.200525)",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "test": "vitest run tests/logica.test.js",
+    "test:db": "vitest run tests/db.integration.test.js",
+    "test:all": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "eslint": "^9.14.0",
+    "pg": "^8.13.1",
+    "prettier": "^3.3.3",
+    "vitest": "^2.1.4"
+  }
+}
